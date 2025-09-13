@@ -1,0 +1,14 @@
+#!/bin/bash
+
+source api
+
+KEY=$((RANDOM % 9000 + 1000))
+
+cpu_info_data=()
+cpu_info_data+=("Model" "$(cpuinfo_read "model name")")
+
+yad --plug="$KEY" --tabnum=1 --list --no-selection --column="Parameter" \
+    --column="Value" "${cpu_info_data[@]}" &
+yad --plug="$KEY" --tabnum=2 --form &
+yad --notebook --title="Systemboard" --key="$KEY" --tab="CPU" --tab="GPU" \
+    --width=600 --height=600 --center --no-buttons

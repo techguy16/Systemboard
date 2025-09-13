@@ -1,0 +1,6 @@
+#!/bin/bash
+
+cpuinfo_read() {
+    read_data="$(cat /proc/cpuinfo | grep "$*" | head -n 1 | awk -F': ' '{print $2}')"
+    echo "$read_data"
+}
