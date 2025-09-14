@@ -9,6 +9,7 @@ cpu_info+=("Architecture" "$(get_cpu_architecture)")
 cpu_info+=("Model name" "$(cpuinfo_read "model name")")
 cpu_info+=("Clock speed" "$(get_cpu_speed)")
 cpu_info+=("Cores" "$(get_cpu_cores)")
+cpu_info+=("Virtualization" "$(get_cpu_vtx)")
 
 gpu_info=()
 gpu_info+=("Brand" "$(get_gpu_brand)")
@@ -20,7 +21,8 @@ ram_info+=("Total memory" "$(get_total_memory)")
 ram_info+=("Branded capacity" "$(get_memory_simple)")
 
 motherboard_info=()
-motherboard_info+=("Brand" "$(get_motherboard_brand)")
+motherboard_info+=("Product" "$(get_product)")
+motherboard_info+=("Motherboard Brand" "$(get_motherboard_brand)")
 motherboard_info+=("Model" "$(get_motherboard_model)")
 
 os_info=()
@@ -30,6 +32,7 @@ os_info+=("Version" "$(get_distro_version)")
 os_info+=("Computer name" "$(get_network_name)")
 os_info+=("Kernel type" "$(get_kernel_name)")
 os_info+=("Kernel version" "$(get_kernel_version)")
+os_info+=("Windowing system" "$(get_windowing_system)")
 
 yad --plug="$KEY" --tabnum=1 --list --no-selection --column="Parameter" \
     --column="Value" --no-headers "${cpu_info[@]}" &
@@ -39,9 +42,24 @@ yad --plug="$KEY" --tabnum=3 --list --no-selection --column="Parameter" \
     --column="Value" --no-headers "${ram_info[@]}" &
 yad --plug="$KEY" --tabnum=4 --list --no-selection --column="Parameter" \
     --column="Value" --no-headers "${motherboard_info[@]}" &
-yad --plug="$KEY" --tabnum=5 --list --no-selection --column="Parameter" \
+
+df -B1 --output=source,target,fstype,size,avail,pcent | tail -n +2 | grep "/dev/" | \
+awk '{
+    cmd="numfmt --to=iec --suffix=B " $4; cmd | getline total; close(cmd)
+    cmd="numfmt --to=iec --suffix=B " $5; cmd | getline free; close(cmd)
+    # insert a space before the unit (B, K, M, G, T)
+    gsub(/([KMGT]?B)$/, " &", total)
+    gsub(/([KMGT]?B)$/, " &", free)
+    printf "%s\n%s\n%s\n%s\n%s\n%s\n", $1,$2,$3,total,free,$6
+}' | \
+yad --plug="$KEY" --tabnum=5 --list --no-selection \
+    --column="Device" --column="Mountpoint" \
+    --column="Type"  --column="Total" \
+    --column="Free" --column="Usage:bar" &
+
+yad --plug="$KEY" --tabnum=6 --list --no-selection --column="Parameter" \
     --column="Value" --no-headers "${os_info[@]}" &
 
-yad --notebook --title="Systemboard" --key="$KEY" --tab="CPU" --tab="GPU" \
-    --tab="Memory" --tab="Motherboard" --tab="Linux" \
-    --width=400 --height=400 --center --no-buttons
+yad --notebook --title="Systemboard - $(get_product)" --key="$KEY" --tab="CPU" --tab="GPU" \
+    --tab="Memory" --tab="Motherboard" --tab="Disks" --tab="Linux" \
+    --width=600 --height=500 --center --no-buttons

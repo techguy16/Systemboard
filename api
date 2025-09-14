@@ -6,7 +6,11 @@ cpuinfo_read() {
 }
 
 get_cpu_architecture() {
-    uname -p
+    if [[ $(uname -p) != "unknown" ]]; then
+        echo "$(uname -p)"
+    else
+        echo "$(uname -m)"
+    fi
 }
 
 get_cpu_speed() {
@@ -17,11 +21,21 @@ get_cpu_cores() {
     echo "$(( $(cat /proc/cpuinfo | grep processor | tail -n1 | awk -F": " '{print $2}') + 1 ))"
 }
 
+get_cpu_vtx() {
+    if [[ "$(cat /proc/cpuinfo | grep vmx | head -n1)" == *"vmx"* ]]; then
+        if [ -e "/dev/kvm" ]; then
+            echo "Supported, enabled"
+        else
+            echo "Supported, not enabled"
+        fi
+    else
+        echo "Not supported"
+    fi
+}
+
 get_gpu_brand() {
     if command -v nvidia-smi &> /dev/null; then
         echo "NVIDIA"
-    elif [ -d /sys/class/drm/card0/device ]; then
-        echo "Advanced Micro Devices"
     else
         case $(cat /sys/class/drm/render*/device/vendor) in
             0x10de) echo "NVIDIA";;
@@ -37,6 +51,8 @@ get_gpu_name() {
         gpu_name_old="$gpu_name"
         gpu_code="$(nvidia-smi --query-gpu=gpu_name --format=csv | tail -n1)"
         gpu_name="$gpu_code"
+    elif [[ "$gpu_name" == *"[Iris Xe Graphics]"* ]]; then
+        gpu_name="Iris Xe Graphics ($(echo $gpu_name | awk '{print $3}'))"
     fi
     echo "$gpu_name"
 }
@@ -45,9 +61,11 @@ get_gpu_memory() {
     gpu_name=$(lspci | grep -i 'vga\|3d\|2d' | awk -F ': ' '{print $2}')
     if command -v nvidia-smi &> /dev/null; then
         nvidia-smi --query-gpu=memory.total,memory.used,memory.free --format=csv | tail -n1 | awk -F',' '{print $1}'
-    elif [ -d /sys/class/drm/card0/device ]; then
+    elif [ -d /sys/class/drm/card0/device ] && [ -e /sys/class/drm/card0/device/mem_info_vram_total ]; then
         total=$(cat /sys/class/drm/card0/device/mem_info_vram_total)
         echo "$((total/1024/1024))"
+    else 
+        echo "Unknown"
     fi
 }
 
@@ -56,7 +74,11 @@ get_total_memory() {
 }
 
 get_memory_simple() {
-    echo "$(($(cat /proc/meminfo | grep MemTotal | awk '{print $2}') / 1000 / 1000)) GB"
+    echo "$(($(cat /proc/meminfo | grep MemTotal | awk '{print $2}') / 1000)) MB"
+}
+
+get_product() {
+    echo "$(cat /sys/devices/virtual/dmi/id/sys_vendor) $(cat /sys/devices/virtual/dmi/id/product_name)"
 }
 
 get_motherboard_brand() {
@@ -89,4 +111,14 @@ get_kernel_version() {
 
 get_network_name() {
     uname -n
+}
+
+get_windowing_system() {
+    if [[ "$XDG_SESSION_TYPE" == "x11" ]]; then
+        echo "X11"
+    elif [[ "$XDG_SESSION_TYPE" == "wayland" ]]; then
+        echo "Wayland"
+    else
+        echo "Unknown"
+    fi
 }
