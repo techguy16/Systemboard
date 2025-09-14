@@ -4,11 +4,44 @@ source api
 
 KEY=$((RANDOM % 9000 + 1000))
 
-cpu_info_data=()
-cpu_info_data+=("Model" "$(cpuinfo_read "model name")")
+cpu_info=()
+cpu_info+=("Architecture" "$(get_cpu_architecture)")
+cpu_info+=("Model name" "$(cpuinfo_read "model name")")
+cpu_info+=("Clock speed" "$(get_cpu_speed)")
+cpu_info+=("Cores" "$(get_cpu_cores)")
+
+gpu_info=()
+gpu_info+=("Brand" "$(get_gpu_brand)")
+gpu_info+=("Model name" "$(get_gpu_name)")
+gpu_info+=("Memory" "$(get_gpu_memory)")
+
+ram_info=()
+ram_info+=("Total memory" "$(get_total_memory)")
+ram_info+=("Branded capacity" "$(get_memory_simple)")
+
+motherboard_info=()
+motherboard_info+=("Brand" "$(get_motherboard_brand)")
+motherboard_info+=("Model" "$(get_motherboard_model)")
+
+os_info=()
+os_info+=("Name" "$(get_distro_prettyname)")
+os_info+=("Distribution" "$(get_distro_name)")
+os_info+=("Version" "$(get_distro_version)")
+os_info+=("Computer name" "$(get_network_name)")
+os_info+=("Kernel type" "$(get_kernel_name)")
+os_info+=("Kernel version" "$(get_kernel_version)")
 
 yad --plug="$KEY" --tabnum=1 --list --no-selection --column="Parameter" \
-    --column="Value" "${cpu_info_data[@]}" &
-yad --plug="$KEY" --tabnum=2 --form &
+    --column="Value" --no-headers "${cpu_info[@]}" &
+yad --plug="$KEY" --tabnum=2 --list --no-selection --column="Parameter" \
+    --column="Value" --no-headers "${gpu_info[@]}" &
+yad --plug="$KEY" --tabnum=3 --list --no-selection --column="Parameter" \
+    --column="Value" --no-headers "${ram_info[@]}" &
+yad --plug="$KEY" --tabnum=4 --list --no-selection --column="Parameter" \
+    --column="Value" --no-headers "${motherboard_info[@]}" &
+yad --plug="$KEY" --tabnum=5 --list --no-selection --column="Parameter" \
+    --column="Value" --no-headers "${os_info[@]}" &
+
 yad --notebook --title="Systemboard" --key="$KEY" --tab="CPU" --tab="GPU" \
-    --width=600 --height=600 --center --no-buttons
+    --tab="Memory" --tab="Motherboard" --tab="Linux" \
+    --width=400 --height=400 --center --no-buttons

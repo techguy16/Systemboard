@@ -4,3 +4,89 @@ cpuinfo_read() {
     read_data="$(cat /proc/cpuinfo | grep "$*" | head -n 1 | awk -F': ' '{print $2}')"
     echo "$read_data"
 }
+
+get_cpu_architecture() {
+    uname -p
+}
+
+get_cpu_speed() {
+    awk -F: '/cpu MHz/ {printf "%.2f GHz\n", int($2/100)/10}' /proc/cpuinfo | head -n1
+}
+
+get_cpu_cores() {
+    echo "$(( $(cat /proc/cpuinfo | grep processor | tail -n1 | awk -F": " '{print $2}') + 1 ))"
+}
+
+get_gpu_brand() {
+    if command -v nvidia-smi &> /dev/null; then
+        echo "NVIDIA"
+    elif [ -d /sys/class/drm/card0/device ]; then
+        echo "Advanced Micro Devices"
+    else
+        case $(cat /sys/class/drm/render*/device/vendor) in
+            0x10de) echo "NVIDIA";;
+            0x1002) echo "AMD";;
+            0x8086) echo "Intel";;
+            *) echo "Unknown";;
+        esac
+    fi
+}
+get_gpu_name() {
+    gpu_name=$(lspci | grep -i 'vga\|3d\|2d' | awk -F ': ' '{print $2}')
+    if [[ "$gpu_name" == "NVIDIA"* ]]; then
+        gpu_name_old="$gpu_name"
+        gpu_code="$(nvidia-smi --query-gpu=gpu_name --format=csv | tail -n1)"
+        gpu_name="$gpu_code"
+    fi
+    echo "$gpu_name"
+}
+
+get_gpu_memory() {
+    gpu_name=$(lspci | grep -i 'vga\|3d\|2d' | awk -F ': ' '{print $2}')
+    if command -v nvidia-smi &> /dev/null; then
+        nvidia-smi --query-gpu=memory.total,memory.used,memory.free --format=csv | tail -n1 | awk -F',' '{print $1}'
+    elif [ -d /sys/class/drm/card0/device ]; then
+        total=$(cat /sys/class/drm/card0/device/mem_info_vram_total)
+        echo "$((total/1024/1024))"
+    fi
+}
+
+get_total_memory() {
+    echo "$(($(cat /proc/meminfo | grep MemTotal | awk '{print $2}') / 1024)) MiB"
+}
+
+get_memory_simple() {
+    echo "$(($(cat /proc/meminfo | grep MemTotal | awk '{print $2}') / 1000 / 1000)) GB"
+}
+
+get_motherboard_brand() {
+    cat /sys/class/dmi/id/board_vendor
+}
+
+get_motherboard_model() {
+    cat /sys/class/dmi/id/board_name
+}
+
+get_distro_prettyname() {
+    cat /etc/*-release | grep PRETTY_NAME=\" | head -n1 | awk -F'"' '{print $2}'
+}
+
+get_distro_name() {
+    cat /etc/*-release | grep NAME=\" | head -n1 | awk -F'"' '{print $2}'
+}
+
+get_distro_version() {
+    cat /etc/*-release | grep VERSION=\" | head -n1 | awk -F'"' '{print $2}'
+}
+
+get_kernel_name() {
+    uname -s
+}
+
+get_kernel_version() {
+    uname -r
+}
+
+get_network_name() {
+    uname -n
+}
