@@ -13,8 +13,20 @@ get_cpu_architecture() {
     fi
 }
 
+get_cpu_name() {
+    cpu_name=$(cpuinfo_read "model name")
+    if [[ "$(echo $cpu_name | awk '{print $2}')" == "Gen" ]]; then
+        cpu_name=$(echo $cpu_name | sed "s/$(echo $cpu_name | awk '{print $1, $2}') //")
+    fi
+    echo "$cpu_name"
+}
+
 get_cpu_speed() {
-    awk -F: '/cpu MHz/ {printf "%.2f GHz\n", int($2/100)/10}' /proc/cpuinfo | head -n1
+    if [[ "$(cat /proc/cpuinfo | grep "model name" | head -n 1 | awk -F': ' '{print $2}')" == *"Intel"* ]]; then
+        echo "$(cat /proc/cpuinfo | grep "model name" | head -n 1 | awk -F': ' '{print $2}' | awk -F'@ ' '{print $2}')"
+    else
+        awk -F: '/cpu MHz/ {printf "%.2f GHz\n", int($2/100)/10}' /proc/cpuinfo | head -n1
+    fi
 }
 
 get_cpu_cores() {
@@ -29,7 +41,7 @@ get_cpu_vtx() {
             echo "Supported, not enabled"
         fi
     else
-        echo "Not supported"
+        echo "Not supported/enabled"
     fi
 }
 
@@ -118,6 +130,18 @@ get_windowing_system() {
         echo "X11"
     elif [[ "$XDG_SESSION_TYPE" == "wayland" ]]; then
         echo "Wayland"
+    else
+        echo "Unknown"
+    fi
+}
+
+get_desktop_environment() {
+    if [[ "$DESKTOP_SESSION" == "gnome"* ]]; then
+        echo "GNOME"
+    elif [[ "$XDG_CURRENT_DESKTOP" != "" ]]; then
+        echo "$XDG_CURRENT_DESKTOP"
+    elif [[ "$DESKTOP_SESSION" != "" ]]; then
+        echo "$DESKTOP_SESSION"
     else
         echo "Unknown"
     fi

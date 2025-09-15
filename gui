@@ -6,7 +6,7 @@ KEY=$((RANDOM % 9000 + 1000))
 
 cpu_info=()
 cpu_info+=("Architecture" "$(get_cpu_architecture)")
-cpu_info+=("Model name" "$(cpuinfo_read "model name")")
+cpu_info+=("Model name" "$(get_cpu_name)")
 cpu_info+=("Clock speed" "$(get_cpu_speed)")
 cpu_info+=("Cores" "$(get_cpu_cores)")
 cpu_info+=("Virtualization" "$(get_cpu_vtx)")
@@ -32,6 +32,7 @@ os_info+=("Version" "$(get_distro_version)")
 os_info+=("Computer name" "$(get_network_name)")
 os_info+=("Kernel type" "$(get_kernel_name)")
 os_info+=("Kernel version" "$(get_kernel_version)")
+os_info+=("Desktop environment" "$(get_desktop_environment)")
 os_info+=("Windowing system" "$(get_windowing_system)")
 
 yad --plug="$KEY" --tabnum=1 --list --no-selection --column="Parameter" \
@@ -60,6 +61,9 @@ yad --plug="$KEY" --tabnum=5 --list --no-selection \
 yad --plug="$KEY" --tabnum=6 --list --no-selection --column="Parameter" \
     --column="Value" --no-headers "${os_info[@]}" &
 
-yad --notebook --title="Systemboard - $(get_product)" --key="$KEY" --tab="CPU" --tab="GPU" \
-    --tab="Memory" --tab="Motherboard" --tab="Disks" --tab="Linux" \
-    --width=600 --height=500 --center --no-buttons
+awk '{printf "%s\n", $1}' /proc/modules | sed "s/[,-]$//" | sort |\
+  yad --plug="$KEY" --tabnum=7 --text="Currently loaded kernel modules" --list --column="Name" --no-headers &
+
+GDK_BACKEND=x11 yad --notebook --title="Systemboard - $(get_product)" --key="$KEY" --tab="CPU" --tab="GPU" \
+    --tab="Memory" --tab="Motherboard" --tab="Disks" --tab="Linux" --tab="Kernel" \
+    --width=600 --height=500 --center --no-buttons 
