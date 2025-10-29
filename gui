@@ -64,6 +64,8 @@ yad --plug="$KEY" --tabnum=6 --list --no-selection --column="Parameter" \
 awk '{printf "%s\n", $1}' /proc/modules | sed "s/[,-]$//" | sort |\
   yad --plug="$KEY" --tabnum=7 --text="Currently loaded kernel modules" --list --column="Name" --no-headers &
 
-GDK_BACKEND=x11 yad --notebook --title="Systemboard - $(get_product)" --key="$KEY" --tab="CPU" --tab="GPU" \
-    --tab="Memory" --tab="Motherboard" --tab="Disks" --tab="Linux" --tab="Kernel" \
-    --width=600 --height=500 --center --no-buttons 
+GDK_BACKEND=x11 yad --notebook --title="Systemboard - $(hostname)" --key="$KEY" --tab="CPU" --tab="GPU" \
+    --tab="Memory" --tab="Motherboard" --tab="Disks" --tab="$(os_type)" --tab="Kernel" \
+    --width=700 --height=500 --center --no-buttons --tab-pos=left \
+    --icon="$(get_icon)" --image="$(get_icon)" --image-on-top --class="Systemboard" \
+    --text="$(systemboard_title_text)"

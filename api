@@ -1,5 +1,12 @@
 #!/bin/bash
 
+os_type() {
+    if [[ "$(uname -s)" == "Linux" ]]; then echo "Linux"
+    else uname -s 
+    fi
+}
+
+
 cpuinfo_read() {
     read_data="$(cat /proc/cpuinfo | grep "$*" | head -n 1 | awk -F': ' '{print $2}')"
     echo "$read_data"
@@ -145,4 +152,16 @@ get_desktop_environment() {
     else
         echo "Unknown"
     fi
+}
+
+get_icon() {
+    if [[ "$(cat /etc/os-release | grep -e "^NAME" | sed "s/\"//g" | awk -F'=' '{print $2}')" == "Debian"* ]]; then
+        echo "emblem-debian"
+    else
+        hostnamectl icon-name
+    fi
+}
+
+systemboard_title_text() {
+    echo "<big><b>$USER@$(hostname)</b></big>\n$(get_product)"
 }
