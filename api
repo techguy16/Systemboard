@@ -145,6 +145,8 @@ get_windowing_system() {
 get_desktop_environment() {
     if [[ "$DESKTOP_SESSION" == "gnome"* ]]; then
         echo "GNOME"
+    elif [[ "$XDG_CURRENT_DESKTOP" == "pop:GNOME" ]];then
+    	echo "Pop! COSMIC"
     elif [[ "$XDG_CURRENT_DESKTOP" != "" ]]; then
         echo "$XDG_CURRENT_DESKTOP"
     elif [[ "$DESKTOP_SESSION" != "" ]]; then

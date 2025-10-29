@@ -67,5 +67,5 @@ awk '{printf "%s\n", $1}' /proc/modules | sed "s/[,-]$//" | sort |\
 GDK_BACKEND=x11 yad --notebook --title="Systemboard - $(hostname)" --key="$KEY" --tab="CPU" --tab="GPU" \
     --tab="Memory" --tab="Motherboard" --tab="Disks" --tab="$(os_type)" --tab="Kernel" \
     --width=700 --height=500 --center --no-buttons --tab-pos=left \
-    --icon="$(get_icon)" --image="$(get_icon)" --image-on-top --class="Systemboard" \
+    --window-icon="$(get_icon)" --image="$(get_icon)" --image-on-top --class="Systemboard" \
     --text="$(systemboard_title_text)"
