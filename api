@@ -84,7 +84,14 @@ get_gpu_memory() {
         total=$(cat /sys/class/drm/card0/device/mem_info_vram_total)
         echo "$((total/1024/1024))"
     else 
-        echo "Unknown"
+        attempt=$(lspci -v -s "$(lspci | grep -i 'vga\|3d\|2d' | awk '{print $1}')" \
+            | grep Memory | tail -n2 | head -n1 | sed 's/\[//' | sed 's/\]//' \
+            | awk -F'size=' '{print $2}' | sed 's/M/ MiB/' | sed 's/G/ GiB/')
+        if [[ "$attempt" == "" ]]; then
+            echo "Unknown"
+        else
+            echo "$attempt"
+        fi
     fi
 }
 
@@ -106,6 +113,22 @@ get_motherboard_brand() {
 
 get_motherboard_model() {
     cat /sys/class/dmi/id/board_name
+}
+
+firmware_type() {
+    [ -d /sys/firmware/efi ] && echo UEFI || echo BIOS
+}
+
+get_bios_vendor() {
+    cat /sys/devices/virtual/dmi/id/bios_vendor
+}
+
+get_bios_version() {
+    cat /sys/devices/virtual/dmi/id/bios_version
+}
+
+get_bios_date() {
+    cat /sys/devices/virtual/dmi/id/bios_date
 }
 
 get_distro_prettyname() {

@@ -24,6 +24,10 @@ motherboard_info=()
 motherboard_info+=("Product" "$(get_product)")
 motherboard_info+=("Motherboard Brand" "$(get_motherboard_brand)")
 motherboard_info+=("Model" "$(get_motherboard_model)")
+firmware_type_get="$(firmware_type)"
+motherboard_info+=("Firmware type" "$firmware_type_get")
+motherboard_info+=("$firmware_type_get Vendor" "$(get_bios_vendor)")
+motherboard_info+=("$firmware_type_get Version" "$(get_bios_version) ($(get_bios_date))")
 
 os_info=()
 os_info+=("Name" "$(get_distro_prettyname)")
@@ -58,14 +62,20 @@ yad --plug="$KEY" --tabnum=5 --list --no-selection \
     --column="Type"  --column="Total" \
     --column="Free" --column="Usage:bar" &
 
-yad --plug="$KEY" --tabnum=6 --list --no-selection --column="Parameter" \
+lspci -mm | \
+awk -F'"' '{ printf "%s\n%s\n%s\n%s\n", $1, $2, $4, $6 }' | \
+yad --plug="$KEY" --tabnum=6 --list --no-selection \
+    --column="ID" --column="Type" \
+    --column="Brand" --column="Device" &
+
+yad --plug="$KEY" --tabnum=7 --list --no-selection --column="Parameter" \
     --column="Value" --no-headers "${os_info[@]}" &
 
 awk '{printf "%s\n", $1}' /proc/modules | sed "s/[,-]$//" | sort |\
-  yad --plug="$KEY" --tabnum=7 --text="Currently loaded kernel modules" --list --column="Name" --no-headers &
+  yad --plug="$KEY" --tabnum=8 --text="Currently loaded kernel modules" --list --column="Name" --no-headers &
 
 GDK_BACKEND=x11 yad --notebook --title="Systemboard - $(hostname)" --key="$KEY" --tab="CPU" --tab="GPU" \
-    --tab="Memory" --tab="Motherboard" --tab="Disks" --tab="$(os_type)" --tab="Kernel" \
+    --tab="Memory" --tab="Motherboard" --tab="Disks" --tab="PCI Modules" --tab="$(os_type)" --tab="Kernel Modules" \
     --width=700 --height=500 --center --no-buttons --tab-pos=left \
     --window-icon="$(get_icon)" --image="$(get_icon)" --image-on-top --class="Systemboard" \
     --text="$(systemboard_title_text)"
